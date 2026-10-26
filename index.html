@@ -143,15 +143,15 @@ textarea.inp{min-height:150px;resize:vertical;line-height:1.5}
   .card{background:transparent;box-shadow:none;border-radius:0;padding:0;min-height:calc(100dvh - 20px)}
   .card>*,.qhead,.qbody,.end{background:#fff;padding-left:20px;padding-right:20px}
   .q{display:contents}
-  .who{order:1;border-radius:26px 26px 0 0;padding-top:clamp(12px,2dvh,18px);margin:0;justify-content:center;position:relative}
-  .who .orb,.who>div:not(.count),.count{display:none}
+  .who{order:1;border-radius:26px 26px 0 0;padding-top:clamp(14px,2.2dvh,20px);margin:0;gap:10px}
+  .who .orb,.who>div:not(.count){display:none}
+  .count{display:block;font-size:13px}
   .who .mlogo{display:block;height:24px;width:auto}
-  .hback{display:grid;place-items:center;position:absolute;left:16px;bottom:-6px;width:36px;height:36px;border-radius:50%;border:0;background:#F1EEFB;color:var(--p600);cursor:pointer}
+  .hback{display:grid;place-items:center;flex:none;margin-left:-6px;width:34px;height:34px;border-radius:50%;border:0;background:#F1EEFB;color:var(--p600);cursor:pointer}
   .hback svg{width:18px;height:18px}
-  .qhead{order:2;text-align:center;padding-top:clamp(10px,2dvh,18px)}
+  .qhead{order:2;padding-top:clamp(14px,2.4dvh,22px)}
   h1{font-size:clamp(22px,3.8dvh,27px);line-height:1.18}
   .help{font-size:clamp(14px,2.1dvh,15px);margin-top:clamp(4px,.9dvh,8px)}
-  .mstep{display:block;font-size:13px;font-weight:600;color:var(--p600);margin-top:clamp(6px,1.2dvh,10px)}
   .progress{order:3;height:auto;margin:0 0 8px;padding:clamp(10px,1.8dvh,16px) 20px clamp(16px,2.6dvh,22px);background:#fff;border-radius:0 0 26px 26px;overflow:visible;position:relative}
   .progress::before,.progress::after{content:"";position:absolute;left:20px;right:20px;top:clamp(10px,1.8dvh,16px);height:6px}
   .progress::before{background:var(--p100);border-radius:99px}
@@ -297,7 +297,7 @@ function render(dir='in'){
   $('err').textContent = '';
   document.querySelector('.card').classList.toggle('wide', !!q.wide);
   $('bar').style.width = (MOBIL.matches ? (k+1)/Q.length : (k+1)/(Q.length+1))*100+'%';
-  $('hback').style.visibility = k===0 ? 'hidden' : 'visible';
+  $('hback').style.display = k===0 ? 'none' : '';
   $('count').innerHTML = `Paso <b>${k+1}</b> de ${Q.length}`;
   $('prev').classList.toggle('hide', k===0);
   $('legal').classList.toggle('off', !q.consent);
@@ -445,7 +445,7 @@ function calificar(d){
 async function finish(){
   Object.assign(data, calificar(data), {completo:true, enviado:new Date().toISOString()});
   await enviar(data);
-  $('bar').style.width='100%'; $('count').innerHTML='¡Completado!'; $('nav').style.display='none'; $('legal').classList.add('off'); $('hback').style.visibility='hidden';
+  $('bar').style.width='100%'; $('count').innerHTML='¡Completado!'; $('nav').style.display='none'; $('legal').classList.add('off'); $('hback').style.display='none';
   const ok = data.estado==='califica', nom = data.nombre ? first(data.nombre) : '';
   $('q').className='q in';
   $('q').innerHTML = `<div class="end"><div class="orb">${document.querySelector('.who .orb').innerHTML}</div>
