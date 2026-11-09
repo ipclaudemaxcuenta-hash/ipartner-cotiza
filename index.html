@@ -199,6 +199,10 @@ textarea.inp{min-height:150px;resize:vertical;line-height:1.5}
 .opts.pairs{margin-top:0;grid-template-columns:repeat(2,minmax(0,1fr))}.opts.pairs.n3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .opts.pairs.n3 .opt{flex-direction:column;align-items:flex-start;gap:10px;padding:14px;justify-content:space-between}
 .opts.pairs.n3 .opt .mk{position:absolute;top:12px;right:12px}
+.simbox{margin-top:20px;text-align:left;border:1.5px dashed var(--o);border-radius:16px;padding:14px 16px;background:#FFF8F1;font-size:13.5px;line-height:1.5;width:100%}
+.simbox b{display:block;color:var(--o);margin-bottom:6px}.simbox p{margin-top:6px}.simbox span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:600}
+.simbox .btn{margin-top:12px;width:100%}
+@media (max-width:640px){.simbox{order:9;margin-top:8px;border-radius:26px;padding:16px 20px}}
 .skip{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:50;font:600 13px Inter;color:#fff;background:#EF801C;border:0;border-radius:999px;
   padding:10px 16px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(0,0,0,.5)}
 .otro{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .3s ease,opacity .3s ease,margin .3s}
@@ -246,6 +250,8 @@ var Mailcheck=(function(){var x="aaa aarp abb abbott abbvie abc able abogado abu
 /* ===== Requisitos mínimos (ajustables) ===== */
 // MODO PRUEBA: muestra un botón para saltar preguntas. Poner en false antes de publicar.
 const MODO_PRUEBA = false;
+// Simulador: abrir con ?simular para ver lo que recibe la vendedora al final.
+const SIM = new URLSearchParams(location.search).has('simular');
 const MIN_VOLUMEN = 50;      // contrataciones/evaluaciones al mes para calificar
 const ZONA_GRIS = 40;        // de 40 a 49 al mes: revisión humana
 const TRAB_OK = ["100 a 499","500 a 999","1 000 o más"];
@@ -308,7 +314,7 @@ const N = {
     ['Menos de 50','',ic.user],['Entre 50 y 300','',ic.team],['Más de 300','',ic.building]]},
   fin:{id:'fin', title:'Último paso', help:'Así preparamos mejor la llamada.', type:'two', groups:[
     {id:'puestos', l:'¿Para qué puestos contratas principalmente?', opts:[
-      ['Operativos en volumen','',ic.team],['Con dinero o mercadería','',ic.cart],['Jefaturas o confianza','',ic.user],['Vigilancia o seguridad','',ic.shield]]},
+      ['Operativos en volumen','',ic.team],['Manejan caja o mercadería','',ic.cart],['Jefaturas o confianza','',ic.user],['Vigilancia o seguridad','',ic.shield]]},
     {id:'rol', l:'¿Cuál es tu rol en esta decisión?', opts:[
       ['Yo decido','',ic.bolt],['Recomiendo','',ic.team],['Estoy averiguando','',ic.search]]}]},
 };
@@ -322,7 +328,7 @@ const Qk = () => N[camino()[k]];
 const PERFIL = {
   vel:{dolor:'Contratar en volumen sin perder candidatos', combo:'IA Plus + Consulta masiva asíncrona', pub:'Tu reto es contratar a muchas personas sin perder candidatos por la espera. Te proponemos un informe con resultado en segundos y evaluación masiva de cientos de personas a la vez.', resaltar:'Respuesta en segundos; carga de hasta 500 personas en menos de 1 hora; valores agregados sin costo.', objecion:'"Mi proveedor es online": muchos piden por plataforma pero el informe tarda horas o días.'},
   ord:{dolor:'Ordenar y justificar su gestión', combo:'IA Plus + Centro de costos', pub:'Tu reto es llevar el control de tus procesos por área o sede. Te proponemos informes organizados por centros de costo para que reportes tu gestión con claridad.', resaltar:'Centro de costos personalizado por área, sede o cliente; sin costo adicional.', objecion:'"Lo hacemos en Excel": horas-hombre y sin trazabilidad.'},
-  per:{dolor:'Pérdidas en puestos con dinero o mercadería', combo:'IA Plus + Estabilidad financiera (Crediticio)', pub:'Tu reto es reducir las pérdidas en los puestos que manejan dinero o mercadería. Te proponemos un informe de riesgo con una matriz de estabilidad financiera para esos puestos.', resaltar:'Matriz de riesgo socioeconómico; caso retail que eliminó robos internos en 3 meses [solo llamada]; Black list.', objecion:'"Es caro": compáralo con lo que cuesta un solo robo interno.'},
+  per:{dolor:'Pérdidas en puestos que manejan caja o mercadería', combo:'IA Plus + Estabilidad financiera (Crediticio)', pub:'Tu reto es reducir las pérdidas en los puestos que manejan dinero o mercadería. Te proponemos un informe de riesgo con una matriz de estabilidad financiera para esos puestos.', resaltar:'Matriz de riesgo socioeconómico; caso retail que eliminó robos internos en 3 meses [solo llamada]; Black list.', objecion:'"Es caro": compáralo con lo que cuesta un solo robo interno.'},
   act:{dolor:'Revisar al personal que ya trabaja', combo:'IA Plus + Re-evaluación periódica + Black list', pub:'Tu reto es tener tranquilidad sobre el equipo que ya trabaja contigo. Te proponemos evaluaciones periódicas de tu personal y una lista de control para no repetir contrataciones que ya te afectaron.', resaltar:'Re-evaluación para renovar contratos; Black list sin costo; carga masiva de toda la planilla.', objecion:'"Ya los evaluamos al entrar": el riesgo cambia con el tiempo.'},
   con:{dolor:'Elegir bien los cargos de confianza', combo:'Premium IA + Validación de confiabilidad (Income / Salarial)', pub:'Tu reto es elegir bien a las personas que ocupan cargos clave. Te proponemos un informe de máxima profundidad con validación de confiabilidad para esos puestos.', resaltar:'Discurso de profundidad y cero riesgo; análisis de alertas con el sectorista.', objecion:'"Son pocos cargos": un error en un cargo clave cuesta más que el servicio.'},
   cum:{dolor:'Evaluar sin contingencias legales', combo:'Premium IA + SPLAFT', pub:'Tu reto es evaluar a tu personal cumpliendo la Ley de Protección de Datos Personales. Te proponemos un informe de máxima profundidad con consentimiento digital de cada persona y el respaldo de iPartner.', resaltar:'Consentimiento digital cifrado; multas de hasta S/ 515 mil; SPLAFT si es sujeto obligado.', objecion:'"Ya tengo proveedor": ¿tu proveedor asume la contingencia o la asumes tú?'},
@@ -517,6 +523,13 @@ async function finish(){
     <p class="help"><b>Un asesor te llamará el mismo día hábil</b> para mostrarte la plataforma en una demo.</p>
     <a class="cta" href="https://www.linkedin.com/company/grupo-ipartner" target="_blank" rel="noopener">Síguenos en LinkedIn<span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"/></svg></span></a></div>`;
   confeti();
+  if (SIM) $('q').insertAdjacentHTML('beforeend', `<div class="simbox"><b>Simulador · lo que recibe la vendedora</b>
+    <p><span>Contacto</span>${esc(data.nombre)} · +51 ${esc(data.celular)} · RUC ${esc(data.ruc)}</p>
+    <p><span>Respuestas</span>${['p1','a1','a2','b1','b2','c1','c2','d1','d2','puestos','rol'].filter(x=>data[x]).map(x=>esc(data[x])).join(' → ')}</p>
+    <p><span>Dolor detectado</span>${P.dolor}</p><p><span>Proponer</span>${P.combo}</p>
+    <p><span>Resaltar</span>${P.resaltar}</p><p><span>Objeción probable</span>${P.objecion}</p>
+    <p><span>Estado</span>${data.estado}</p>
+    <button type="button" class="btn next" onclick="location.reload()">Probar otro camino</button></div>`);
 }
 function confeti(){
   const c = document.createElement('div'); c.className = 'confetti';
