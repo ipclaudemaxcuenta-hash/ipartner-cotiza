@@ -180,12 +180,25 @@ textarea.inp{min-height:150px;resize:vertical;line-height:1.5}
   .opt .ic{width:clamp(30px,5dvh,38px);height:clamp(30px,5dvh,38px);background:#fff}
   .opts.compact .opt{padding:clamp(6px,1.2dvh,9px) 12px;gap:12px}.opts.compact .ic{width:clamp(28px,4.4dvh,32px);height:clamp(28px,4.4dvh,32px);border-radius:10px}.opts.compact .ic svg{width:18px;height:18px}.opts.compact .tx b{font-size:15px}.opts.compact .tx span{display:none}
   .end .orb{width:90px;height:90px}
+  .opts.mcompact .tx span{display:none}.opts.mcompact .opt{padding:clamp(9px,1.6dvh,13px) 14px}
+  .opts.pairs{grid-template-columns:1fr 1fr!important;gap:8px}
+  .opts.pairs.n3{grid-template-columns:1fr 1fr 1fr!important}
+  .opts.pairs .opt{flex-direction:column;align-items:flex-start;gap:8px;padding:12px;min-height:84px;justify-content:space-between}
+  .opts.pairs .opt .mk{position:absolute;top:10px;right:10px;width:18px;height:18px}
+  .opts.pairs .opt .tx b{font-size:14px;line-height:1.25}
+  .opts.pairs.n3 .opt{min-height:76px}
+  .glab{font-size:14px;margin:16px 0 8px}
 }
 
 .badge{display:inline-flex;gap:6px;align-items:center;font:600 13px Inter;color:#0F7B4B;background:#E7F8EF;border:1px solid #BFEBD3;padding:6px 12px;border-radius:999px}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
 .confetti i{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;opacity:.9;animation:fall linear forwards}
 @keyframes fall{to{top:105%;transform:translateX(40px) rotate(720deg)}}
+.glab{font:600 15px Inter;color:var(--txt);margin:20px 0 10px}
+.glab:first-child{margin-top:24px}
+.opts.pairs{margin-top:0;grid-template-columns:repeat(2,minmax(0,1fr))}.opts.pairs.n3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.opts.pairs.n3 .opt{flex-direction:column;align-items:flex-start;gap:10px;padding:14px;justify-content:space-between}
+.opts.pairs.n3 .opt .mk{position:absolute;top:12px;right:12px}
 .skip{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:50;font:600 13px Inter;color:#fff;background:#EF801C;border:0;border-radius:999px;
   padding:10px 16px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(0,0,0,.5)}
 .otro{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .3s ease,opacity .3s ease,margin .3s}
@@ -263,27 +276,67 @@ const ic = {
 };
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
 
-/* ===== Preguntas ===== */
-const Q = [
-  {id:'contacto', title:'Cotiza el servicio para tu empresa', help:'Un asesor te llamará con una propuesta a tu medida.', type:'fields', consent:true,
+/* ===== Preguntas (árbol diagnóstico) ===== */
+// Cada persona ve 5 pantallas: contacto · motivo · 2 preguntas de su rama · puestos y rol.
+const N = {
+  contacto:{id:'contacto', title:'Cotiza el servicio para tu empresa', help:'Un asesor te llamará con una propuesta a tu medida.', type:'fields', consent:true,
     fields:[{n:'nombre',l:'Nombre y apellido',ph:'Ana Torres',ac:'name'},
             {n:'celular',l:'Celular',ph:'987 654 321',t:'tel',ac:'tel',half:true},
-            {n:'correo',l:'Correo electrónico',ph:'ana@empresa.com',t:'email',ac:'email',half:true}]},
-  {id:'emp', title:d=>d.nombre ? `${first(d.nombre)}, ¿en qué empresa trabajas?` : '¿En qué empresa trabajas?', help:'Cuéntanos un poco sobre tu empresa.', type:'fields',
-    fields:[{n:'empresa',l:'Nombre de la empresa',ph:'Ej. Agro Norte',ac:'organization'},
-            {n:'ruc',l:'RUC',opt:true,ph:'20XXXXXXXXX',im:'numeric',max:11},
-            {n:'cargo',l:'Tu cargo',ph:'Ej. Jefa de Reclutamiento',ac:'organization-title'}]},
-  {id:'trabajadores', title:'¿Cuántos trabajadores tienen en planilla?', help:'Cuenta a todo el personal, en todas las sedes.', type:'one', cols:2, opts:[
-    ['Menos de 100','',ic.user],['100 a 499','',ic.team],['500 a 999','',ic.team],['1 000 o más','',ic.building]]},
-  {id:'volumen', title:'¿Cuántas personas contratan o evalúan al mes?', help:'Un promedio aproximado está bien.', type:'number'},
-  {id:'retos', title:'¿Cuáles son sus mayores retos hoy?', help:'Puedes elegir varias opciones.', type:'many', cols:2, wide:true, extra:true, opts:[
-    ['Alta rotación','La gente entra y sale muy rápido',ic.loop],
-    ['Contratar rápido en volumen','Muchas vacantes y poco tiempo',ic.bolt],
-    ['Información poco confiable','Lo que dice el CV no siempre es real',ic.doc],
-    ['Robos o fraude interno','Mermas y pérdidas desde adentro',ic.alert],
-    ['Protección de datos','Cumplir la ley y evitar multas',ic.lock],
-    ['Otro','',ic.dots]]},
-];
+            {n:'ruc',l:'RUC de la empresa',ph:'20XXXXXXXXX',im:'numeric',max:11,half:true,ruc:true}]},
+  p1:{id:'p1', mcompact:true, title:d=>d.nombre ? `${first(d.nombre)}, ¿qué te llevó a buscarnos hoy?` : '¿Qué te llevó a buscarnos hoy?', help:'Elige la que más se parezca a tu situación.', type:'one', opts:[
+    ['Necesito contratar a muchas personas rápido','Muchas vacantes y poco tiempo',ic.bolt],
+    ['Tuvimos pérdidas, mermas o faltantes','En caja, almacén u operación',ic.alert],
+    ['Tenemos una auditoría o revisión','Datos personales, clientes o licitaciones',ic.shield],
+    ['Mi proveedor actual no me convence','Demora, poca claridad o dudas legales',ic.loop]]},
+  a1:{id:'a1', title:'¿A cuántas personas evalúan al mes?', help:'Un aproximado está bien.', type:'one', opts:[
+    ['Menos de 50','',ic.user],['Entre 50 y 300','',ic.team],['Más de 300','',ic.building]]},
+  a2:{id:'a2', title:'¿Qué es lo que más te frena hoy?', help:'Elige la principal.', type:'one', opts:[
+    ['Los candidatos se van mientras espero','Pierdo buenos perfiles por la demora',ic.clock],
+    ['Revisar uno por uno me quita tiempo','Mucho trabajo manual',ic.doc],
+    ['Me cuesta ordenar por áreas o sedes','Necesito reportar mi gestión',ic.cal]]},
+  b1:{id:'b1', title:'¿Dónde se notaron más las pérdidas?', help:'', type:'one', opts:[
+    ['En caja o en tiendas','',ic.cart],['En almacén o con mercadería','',ic.building],['En la operación o en campo','',ic.pick],['En la administración o con dinero','',ic.lock]]},
+  b2:{id:'b2', title:'¿Qué personal te preocupa más?', help:'', type:'one', opts:[
+    ['El que voy a contratar','Quiero prevenir desde el ingreso',ic.user],['El que ya trabaja conmigo','Quiero revisar a mi equipo actual',ic.team],['Ambos','',ic.loop]]},
+  c1:{id:'c1', title:'¿Qué tipo de revisión tienes por delante?', help:'', type:'one', opts:[
+    ['Protección de datos personales','Evitar multas',ic.lock],['Una exigencia de mi cliente o licitación','Demostrar que evalúo a mi personal',ic.doc],['Prevención de lavado de activos','',ic.shield]]},
+  c2:{id:'c2', title:'¿A quiénes necesitas evaluar?', help:'', type:'one', opts:[
+    ['A mi personal propio','',ic.team],['A contratistas o terceros','',ic.building],['A ambos','',ic.loop]]},
+  d1:{id:'d1', title:'¿Qué no te convence de tu proveedor actual?', help:'Elige la principal.', type:'one', opts:[
+    ['Demora en darme resultados','',ic.clock],['La información no es clara','',ic.doc],['No sé si cumple la ley de datos','',ic.lock],['El precio','',ic.cart]]},
+  d2:{id:'d2', title:'¿A cuántas personas evalúan al mes?', help:'Un aproximado está bien.', type:'one', opts:[
+    ['Menos de 50','',ic.user],['Entre 50 y 300','',ic.team],['Más de 300','',ic.building]]},
+  fin:{id:'fin', title:'Último paso', help:'Así preparamos mejor la llamada.', type:'two', groups:[
+    {id:'puestos', l:'¿Para qué puestos contratas principalmente?', opts:[
+      ['Operativos en volumen','',ic.team],['Con dinero o mercadería','',ic.cart],['Jefaturas o confianza','',ic.user],['Vigilancia o seguridad','',ic.shield]]},
+    {id:'rol', l:'¿Cuál es tu rol en esta decisión?', opts:[
+      ['Yo decido','',ic.bolt],['Recomiendo','',ic.team],['Estoy averiguando','',ic.search]]}]},
+};
+const RAMA = ['a','b','c','d'];
+const TOTAL = 5;
+const idx = (id, v) => (N[id].opts||[]).findIndex(o=>o[0]===v);
+function camino(){ const b = RAMA[idx('p1', data.p1)]; return ['contacto','p1', b?b+'1':'a1', b?b+'2':'a2', 'fin']; }
+const Qk = () => N[camino()[k]];
+
+/* ===== Diagnóstico final (lo ve la persona) y resumen (para la vendedora) ===== */
+const PERFIL = {
+  vel:{dolor:'Contratar en volumen sin perder candidatos', combo:'IA Plus + Consulta masiva asíncrona', pub:'Tu reto es contratar a muchas personas sin perder candidatos por la espera. Te proponemos un informe con resultado en segundos y evaluación masiva de cientos de personas a la vez.', resaltar:'Respuesta en segundos; carga de hasta 500 personas en menos de 1 hora; valores agregados sin costo.', objecion:'"Mi proveedor es online": muchos piden por plataforma pero el informe tarda horas o días.'},
+  ord:{dolor:'Ordenar y justificar su gestión', combo:'IA Plus + Centro de costos', pub:'Tu reto es llevar el control de tus procesos por área o sede. Te proponemos informes organizados por centros de costo para que reportes tu gestión con claridad.', resaltar:'Centro de costos personalizado por área, sede o cliente; sin costo adicional.', objecion:'"Lo hacemos en Excel": horas-hombre y sin trazabilidad.'},
+  per:{dolor:'Pérdidas en puestos con dinero o mercadería', combo:'IA Plus + Estabilidad financiera (Crediticio)', pub:'Tu reto es reducir las pérdidas en los puestos que manejan dinero o mercadería. Te proponemos un informe de riesgo con una matriz de estabilidad financiera para esos puestos.', resaltar:'Matriz de riesgo socioeconómico; caso retail que eliminó robos internos en 3 meses [solo llamada]; Black list.', objecion:'"Es caro": compáralo con lo que cuesta un solo robo interno.'},
+  act:{dolor:'Revisar al personal que ya trabaja', combo:'IA Plus + Re-evaluación periódica + Black list', pub:'Tu reto es tener tranquilidad sobre el equipo que ya trabaja contigo. Te proponemos evaluaciones periódicas de tu personal y una lista de control para no repetir contrataciones que ya te afectaron.', resaltar:'Re-evaluación para renovar contratos; Black list sin costo; carga masiva de toda la planilla.', objecion:'"Ya los evaluamos al entrar": el riesgo cambia con el tiempo.'},
+  con:{dolor:'Elegir bien los cargos de confianza', combo:'Premium IA + Validación de confiabilidad (Income / Salarial)', pub:'Tu reto es elegir bien a las personas que ocupan cargos clave. Te proponemos un informe de máxima profundidad con validación de confiabilidad para esos puestos.', resaltar:'Discurso de profundidad y cero riesgo; análisis de alertas con el sectorista.', objecion:'"Son pocos cargos": un error en un cargo clave cuesta más que el servicio.'},
+  cum:{dolor:'Evaluar sin contingencias legales', combo:'Premium IA + SPLAFT', pub:'Tu reto es evaluar a tu personal cumpliendo la Ley de Protección de Datos Personales. Te proponemos un informe de máxima profundidad con consentimiento digital de cada persona y el respaldo de iPartner.', resaltar:'Consentimiento digital cifrado; multas de hasta S/ 515 mil; SPLAFT si es sujeto obligado.', objecion:'"Ya tengo proveedor": ¿tu proveedor asume la contingencia o la asumes tú?'},
+  cam:{dolor:'Cambiar a un proveedor más rápido y claro', combo:'IA Plus (+ valor agregado según puestos)', pub:'Tu reto es tener resultados rápidos, claros y con respaldo legal. Te proponemos un informe procesado con semáforo de riesgo, en segundos y cumpliendo la ley de datos personales.', resaltar:'Descarte de homonimia incluido; informe procesado, no datos crudos; respuesta en segundos.', objecion:'"Es lo mismo que tengo, hablemos de precio": mostrar el reporte en la demo.'},
+};
+function diagnostico(){
+  const p1 = idx('p1', data.p1), puestos = N.fin.groups[0].opts.findIndex(o=>o[0]===data.puestos);
+  const conf = puestos===2;
+  if (p1===0) return idx('a2', data.a2)===2 ? 'ord' : (conf ? 'con' : 'vel');
+  if (p1===1) return idx('b2', data.b2)===1 ? 'act' : (conf ? 'con' : 'per');
+  if (p1===2) return 'cum';
+  const d1 = idx('d1', data.d1);
+  return d1===2 ? 'cum' : (d1===0 ? 'vel' : (conf ? 'con' : 'cam'));
+}
 
 /* ===== Motor ===== */
 const $ = id => document.getElementById(id);
@@ -294,21 +347,21 @@ const fine = matchMedia('(pointer:fine)').matches;
 const MOBIL = matchMedia('(max-width:640px)');
 
 function render(dir='in'){
-  const q = Q[k], box = $('q');
+  const q = Qk(), box = $('q');
   $('err').textContent = '';
   document.querySelector('.card').classList.toggle('wide', !!q.wide);
-  $('bar').style.width = (MOBIL.matches ? (k+1)/Q.length : (k+1)/(Q.length+1))*100+'%';
+  $('bar').style.width = (MOBIL.matches ? (k+1)/TOTAL : (k+1)/(TOTAL+1))*100+'%';
   $('hback').style.display = k===0 ? 'none' : '';
-  $('count').innerHTML = `Paso <b>${k+1}</b> de ${Q.length}`;
+  $('count').innerHTML = `Paso <b>${k+1}</b> de ${TOTAL}`;
   $('prev').classList.toggle('hide', k===0);
   $('legal').classList.toggle('off', !q.consent);
-  $('next').firstChild.textContent = k===Q.length-1 ? 'Enviar' : 'Continuar';
+  $('next').firstChild.textContent = k===TOTAL-1 ? 'Enviar' : 'Continuar';
   const title = typeof q.title==='function' ? q.title(data) : q.title;
-  let h = `<div class="qhead"><h1>${title}</h1>${q.help?`<p class="help${k===0?' one':''}">${q.help}</p>`:''}<p class="mstep">Paso ${k+1} de ${Q.length}</p></div><div class="qbody">`;
+  let h = `<div class="qhead"><h1>${title}</h1>${q.help?`<p class="help${k===0?' one':''}">${q.help}</p>`:''}<p class="mstep">Paso ${k+1} de ${TOTAL}</p></div><div class="qbody">`;
 
   if (q.type==='one' || q.type==='many'){
     const cur = data[q.id];
-    h += `<div class="opts ${q.tiles?'tiles':''} ${q.cols?'grid2':''} ${q.type==='many'?'compact':''}">` + q.opts.map(([t,s,icon])=>{
+    h += `<div class="opts ${q.tiles?'tiles':''} ${q.cols?'grid2':''} ${q.type==='many'?'compact':''} ${q.mcompact?'mcompact':''}">` + q.opts.map(([t,s,icon])=>{
       const sel = q.type==='one' ? cur===t : (cur||[]).includes(t);
       if (q.tiles) return `<button type="button" class="opt tile ${sel?'sel':''}" data-v="${esc(t)}" aria-label="${esc(t)} trabajadores">
         <span class="lvl">${[1,2,3,4].map(n=>`<i class="${n<=icon?'on':''}"></i>`).join('')}</span>
@@ -316,6 +369,10 @@ function render(dir='in'){
       return `<button type="button" class="opt ${q.type==='many'?'multi':''} ${sel?'sel':''}" data-v="${esc(t)}">
         <span class="ic">${icon}</span><span class="tx"><b>${esc(t)}</b>${s?`<span>${s}</span>`:''}</span><span class="mk">${CHECK}</span></button>`;
     }).join('') + '</div>';
+  }
+  if (q.type==='two'){
+    h += q.groups.map(g=>`<p class="glab">${g.l}</p><div class="opts grid2 compact pairs n${g.opts.length}" data-g="${g.id}">` + g.opts.map(([t,s,icon])=>
+      `<button type="button" class="opt ${data[g.id]===t?'sel':''}" data-v="${esc(t)}"><span class="ic">${icon}</span><span class="tx"><b>${esc(t)}</b></span><span class="mk">${CHECK}</span></button>`).join('') + '</div>').join('');
   }
   if (q.type==='fields'){
     h += '<div class="fields">' + q.fields.map(f=>`<label${f.half?' class="half"':''}><span>${f.l}${f.opt?' <em>(opcional)</em>':''}</span>
@@ -333,7 +390,7 @@ function render(dir='in'){
 }
 
 function collect(){
-  const q = Q[k];
+  const q = Qk();
   $('q').querySelectorAll('input,textarea').forEach(el=>{
     if (el.type==='checkbox') data[el.name]=el.checked; else data[el.name]=el.value.trim();
   });
@@ -378,7 +435,7 @@ function clearErr(el){
 function shake(el){ el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
 
 function validate(){
-  const q = Q[k], box = $('q'), bad = [];
+  const q = Qk(), box = $('q'), bad = [];
   $('err').textContent = '';
   box.querySelectorAll('.inp').forEach(clearErr);
   const inp = n => box.querySelector(`[name="${n}"]`);
@@ -386,10 +443,11 @@ function validate(){
 
   if (q.type==='fields') for (const f of q.fields){
     const v = data[f.n]||'';
-    if (!f.opt && !v) need(f.n, 'Falta completar '+f.l.charAt(0).toLowerCase()+f.l.slice(1)+'.');
+    if (!f.opt && !v) need(f.n, 'Falta completar '+(/^[A-Z]{2}/.test(f.l) ? f.l : f.l.charAt(0).toLowerCase()+f.l.slice(1))+'.');
     else if (f.t==='email' && emailFix(v) && data._correoOk!==v){ data._correoOk = v; need(f.n, `¿Quisiste decir <button type="button" class="sug" data-n="${f.n}">${esc(emailFix(v))}</button>? Si tu correo está bien, presiona Continuar otra vez.`); }
     else if (f.t==='email' && !EMAIL_OK.test(v)) need(f.n, 'Revisa el correo, parece incompleto.');
     else if (f.t==='tel' && v.replace(/\D/g,'').length<9) need(f.n, 'El celular debe tener 9 dígitos.');
+    else if (f.ruc && !/^(10|15|16|17|20)\d{9}$/.test(v.replace(/\D/g,''))) need(f.n, 'El RUC debe tener 11 dígitos.');
   }
   if (q.type==='number' && (data.volumen==='' || isNaN(data.volumen) || data.volumen<0)) need('volumen', 'Escribe un número aproximado.');
   if (q.extra && (data[q.id]||[]).includes('Otro') && !data.contexto) need('contexto', 'Cuéntanos brevemente cuál es el otro problema.');
@@ -397,6 +455,7 @@ function validate(){
     $('err').textContent = q.type==='one' ? 'Elige una opción para continuar.' : 'Elige al menos una opción para continuar.';
     bad.push(box.querySelector('.opts'));
   }
+  if (q.type==='two') q.groups.forEach(g=>{ if (!data[g.id]) { $('err').textContent = 'Responde las dos preguntas para continuar.'; bad.push(box.querySelector(`[data-g="${g.id}"]`)); } });
   if (!bad.length) return true;
   bad.forEach(shake);
   (box.querySelector('.bad input, input.bad') || {focus(){}}).focus();
@@ -408,7 +467,12 @@ $('q').addEventListener('click', e=>{
   if (sg){ const el = $('q').querySelector(`[name="${sg.dataset.n}"]`); el.value = data[sg.dataset.n] = sg.textContent; clearErr(el); el.focus(); return; }
   const o = e.target.closest('.opt'); if (!o) return;
   $('err').textContent='';
-  const q = Q[k], v = o.dataset.v;
+  const q = Qk(), v = o.dataset.v;
+  if (q.type==='two'){
+    const grp = o.closest('.opts'); data[grp.dataset.g] = v;
+    grp.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel', x===o));
+    return;
+  }
   if (q.type==='one'){
     data[q.id] = v;
     $('q').querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel', x===o));
@@ -425,7 +489,7 @@ $('q').addEventListener('input', e=>{ $('err').textContent=''; if (e.target.clas
 function go(){
   collect(); if (!validate()) return;
   if (k===0){ data.acepta = true; data.consentimiento = {texto: $('legal').textContent.trim(), fecha: new Date().toISOString()}; guardarParcial(); }
-  if (k < Q.length-1){ k++; render('in'); } else finish();
+  if (k < TOTAL-1){ k++; render('in'); } else finish();
 }
 $('next').onclick = go;
 $('hback').onclick = ()=>$('prev').click();
@@ -434,29 +498,25 @@ document.addEventListener('keydown', e=>{
   if (e.key==='Enter' && e.target.tagName!=='TEXTAREA' && !$('next').disabled && $('nav').style.display!=='none'){ e.preventDefault(); go(); }
 });
 
-function calificar(d){
-  const v = Number(d.volumen), t = TRAB_OK.includes(d.trabajadores), m = [];
-  if (!t) m.push('Trabajadores: '+d.trabajadores);
-  if (v < MIN_VOLUMEN) m.push(`Volumen mensual: ${v} (mínimo ${MIN_VOLUMEN})`);
-  let estado = 'califica';
-  if (v < ZONA_GRIS || (!t && v < MIN_VOLUMEN)) estado = 'no califica';
-  else if (m.length) estado = 'revisar';
-  return {estado, califica: estado==='califica', motivos:m};
+function estado(d){
+  const vol = d.a1 || d.d2;
+  if (vol==='Menos de 50') return 'revisar (menos de 50 al mes)';
+  return vol ? 'llamar' : 'llamar · confirmar volumen y trabajadores con el RUC';
 }
 async function finish(){
-  Object.assign(data, calificar(data), {completo:true, enviado:new Date().toISOString()});
+  const key = diagnostico(), P = PERFIL[key];
+  Object.assign(data, {perfil:key, dolor:P.dolor, combo:P.combo, resaltar:P.resaltar, objecion:P.objecion, estado:estado(data), completo:true, enviado:new Date().toISOString()});
   await enviar(data);
   $('bar').style.width='100%'; $('count').innerHTML='¡Completado!'; $('nav').style.display='none'; $('legal').classList.add('off'); $('hback').style.display='none';
-  const ok = data.estado==='califica', nom = data.nombre ? first(data.nombre) : '';
+  const nom = data.nombre ? first(data.nombre) : '';
   $('q').className='q in';
   $('q').innerHTML = `<div class="end"><div class="orb">${document.querySelector('.who .orb').innerHTML}</div>
-    ${ok ? `<span class="badge">✓ Tu empresa califica</span>` : ''}
-    <h1>${ok ? '¡Felicidades' : '¡Gracias'}${nom ? ', '+nom : ''}!</h1>
-    <p class="help">${ok
-      ? 'Preparamos una propuesta personalizada para tu empresa. Un asesor te llamará muy pronto.'
-      : 'Tu solicitud está en proceso de evaluación. Nuestro equipo la revisará y te contactará con las opciones que mejor se ajusten a tu empresa.'}</p>
+    <span class="badge">✓ Tu primer diagnóstico está listo</span>
+    <h1>${nom ? nom+', ' : ''}esto es lo que vemos</h1>
+    <p class="help">${P.pub}</p>
+    <p class="help"><b>Un asesor te llamará el mismo día hábil</b> para mostrarte la plataforma en una demo.</p>
     <a class="cta" href="https://www.linkedin.com/company/grupo-ipartner" target="_blank" rel="noopener">Síguenos en LinkedIn<span class="arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"/></svg></span></a></div>`;
-  if (ok) confeti();
+  confeti();
 }
 function confeti(){
   const c = document.createElement('div'); c.className = 'confetti';
@@ -476,7 +536,7 @@ async function enviar(d){ console.log('Respuesta del formulario:', JSON.stringif
 if (MODO_PRUEBA){
   const b = document.createElement('button');
   b.type = 'button'; b.className = 'skip'; b.textContent = 'Modo prueba: saltar ›';
-  b.onclick = ()=>{ collect(); if (k < Q.length-1){ k++; render('in'); } else finish(); };
+  b.onclick = ()=>{ collect(); if (k < TOTAL-1){ k++; render('in'); } else finish(); };
   document.body.appendChild(b);
 }
 render();
