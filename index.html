@@ -519,6 +519,7 @@ async function finish(){
   const key = diagnostico(), P = PERFIL[key];
   Object.assign(data, {perfil:key, dolor:P.dolor, combo:P.combo, resaltar:P.resaltar, objecion:P.objecion, estado:estado(data), completo:true, enviado:new Date().toISOString()});
   await enviar(data);
+  avisar('completo');
   $('bar').style.width='100%'; $('count').innerHTML='¡Completado!'; $('nav').style.display='none'; $('legal').classList.add('off'); $('hback').style.display='none';
   const nom = data.nombre ? first(data.nombre) : '';
   $('q').className='q in';
@@ -552,6 +553,16 @@ const SUPABASE_URL = 'https://bfzvhcmcmliiyyvpbbno.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_mkwSxWsqar7jN_yZPgKg0A_e4aHavKL';
 const LEAD_ID = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g,()=>(Math.random()*16|0).toString(16)));
 function guardarParcial(){ delete data._correoOk; enviar({...data, completo:false, estado:'parcial'}); }
+// Aviso por correo a las vendedoras (función /api/aviso en Vercel).
+let avisado = false;
+function avisar(tipo){
+  if (avisado || location.protocol==='file:') return; avisado = true;
+  const body = JSON.stringify({...data, tipo, origen: SIM ? 'prueba' : 'linkedin'});
+  if (tipo==='parcial' && navigator.sendBeacon) return navigator.sendBeacon('/api/aviso', new Blob([body],{type:'application/json'}));
+  fetch('/api/aviso', {method:'POST', keepalive:true, headers:{'Content-Type':'application/json'}, body}).catch(()=>{});
+}
+// Si deja sus datos y se va sin terminar, se avisa como lead parcial.
+addEventListener('pagehide', ()=>{ if (data.celular && !data.completo) avisar('parcial'); });
 async function enviar(d){
   const orden = ['p1','a1','a2','b1','b2','c1','c2','d1','d2','vol','puestos','rol'];
   const payload = {id:LEAD_ID, origen:SIM ? 'prueba' : 'linkedin', ...d,
