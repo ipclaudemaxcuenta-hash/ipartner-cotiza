@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flujo del formulario iPartner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEEBFA;--p:#412780;--p2:#7C5CE0;--o:#EF801C;--txt:#17122B;--mut:#6B6584;--lil:#F3F0FC;--line:#E3DDF3}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:radial-gradient(70% 50% at 20% 0%,#DCD3FA,transparent 70%),var(--bg);color:var(--txt);min-height:100vh}
+header{padding:22px 28px 10px;position:sticky;left:0}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--o);font-weight:700}
+h1{font:700 26px/1.2 Sora;letter-spacing:-.02em;margin-top:4px}
+.sub{color:var(--mut);font-size:14px;margin-top:6px;max-width:860px;line-height:1.5}
+.tools{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.tools button{font:600 13px Inter;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;cursor:pointer;color:var(--txt)}
+.tools button.on{background:var(--p);border-color:var(--p);color:#fff}
+.tools span{font-size:12.5px;color:var(--mut)}
+.viewport{overflow:auto;padding:10px 28px 40px}
+.board{position:relative;transform-origin:0 0}
+svg.wires{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.col-lbl{position:absolute;top:0;font:700 11px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);text-align:center}
+.row-lbl{position:absolute;font:700 13px Sora;color:var(--p);writing-mode:vertical-rl;transform:rotate(180deg);text-align:center}
+.phone{position:absolute;width:220px;background:#fff;border-radius:26px;padding:12px 12px 14px;box-shadow:0 14px 34px -16px rgba(65,39,128,.45);border:1px solid #fff;transition:opacity .25s,box-shadow .25s,transform .25s}
+.phone .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.phone .logo{font:700 13px Sora;color:var(--p)}.phone .logo i{font-style:normal;color:var(--o)}
+.phone .step{font-size:10px;color:var(--mut);font-weight:600}
+.phone .bar{display:flex;gap:3px;margin-bottom:10px}.phone .bar i{flex:1;height:4px;border-radius:9px;background:#E9E4F8}.phone .bar i.on{background:var(--p2)}
+.phone h3{font:700 13.5px/1.25 Sora;text-align:center;letter-spacing:-.01em}
+.phone .help{font-size:10.5px;color:var(--mut);text-align:center;margin-top:4px}
+.phone .ops{display:grid;gap:5px;margin-top:10px}
+.phone .op{font-size:11px;font-weight:600;background:var(--lil);border-radius:9px;padding:7px 9px;display:flex;justify-content:space-between;gap:6px;align-items:center;cursor:pointer;border:1.5px solid transparent;transition:.15s}
+.phone .op:hover{border-color:var(--p2)}
+.phone .op .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid #C9BFE6;flex:none}
+.phone .op.sel{background:#E6DEFF;border-color:var(--p2)}.phone .op.sel .dot{background:var(--p2);border-color:var(--p2)}
+.phone .glab{font-size:10px;font-weight:700;color:var(--txt);margin-top:9px}
+.phone .ops.g2{grid-template-columns:1fr 1fr}
+.phone .field{font-size:10.5px;color:#9E97B6;background:var(--lil);border-radius:9px;padding:8px 9px;margin-top:5px}
+.phone .fl{font-size:9.5px;font-weight:600;margin-top:7px;color:var(--txt)}
+.phone .btn{margin-top:10px;background:var(--p);color:#fff;font:600 11px Inter;text-align:center;border-radius:99px;padding:8px}
+.phone .legal{font-size:8.5px;color:var(--mut);text-align:center;margin-top:6px}
+.phone.res{border:2px solid var(--p2)}
+.phone.res .badge{display:block;width:max-content;margin:2px auto 6px;font-size:9.5px;font-weight:700;color:#0F7B4B;background:#E7F8EF;border-radius:99px;padding:3px 8px}
+.phone.res .orb{width:34px;height:34px;border-radius:50%;margin:4px auto 6px;background:radial-gradient(circle at 35% 30%,#B99BFF,#5B34B8 55%,#2A1758);box-shadow:0 0 18px rgba(124,92,224,.6)}
+.phone.res p{font-size:10.5px;color:var(--mut);text-align:center;line-height:1.45;margin-top:5px}
+.phone.res .combo{font-size:10px;font-weight:700;color:var(--p);text-align:center;background:var(--lil);border-radius:9px;padding:6px;margin-top:8px}
+.phone.res .cond{font-size:9.5px;color:var(--o);font-weight:700;text-align:center;letter-spacing:.04em;text-transform:uppercase}
+.dim .phone{opacity:.28}.dim .phone.lit{opacity:1;box-shadow:0 0 0 3px var(--p2),0 18px 40px -14px rgba(65,39,128,.6)}
+.dim svg path.w{opacity:.12}.dim svg path.w.lit{opacity:1;stroke:#5B34B8;stroke-width:3}
+.panel{position:fixed;right:18px;bottom:18px;width:330px;background:#fff;border-radius:20px;padding:14px 16px;box-shadow:0 20px 50px -18px rgba(23,18,43,.5);font-size:13px;line-height:1.5;display:none;max-height:70vh;overflow:auto}
+.panel.on{display:block}
+.panel b.t{display:block;font:700 14px Sora;color:var(--p);margin-bottom:4px}
+.panel .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--o);font-weight:700;margin-top:8px}
+.panel button{margin-top:10px;font:600 12px Inter;border:0;background:var(--lil);border-radius:99px;padding:7px 12px;cursor:pointer;color:var(--p)}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">iPartner · Formulario diagnóstico</div>
+  <h1>Así se ve cada pantalla y a dónde lleva cada respuesta</h1>
+  <p class="sub">Haz clic en cualquier opción de una pantalla: se iluminan las pantallas que le salen a la persona después y el resultado final. Cada fila es un camino según lo que responda en "¿Qué te llevó a buscarnos hoy?".</p>
+  <div class="tools"><span>Zoom:</span><button data-z=".6">60 %</button><button data-z=".8" class="on">80 %</button><button data-z="1">100 %</button><button id="reset">Ver todo</button></div>
+</header>
+<div class="viewport"><div class="board" id="board"><svg class="wires" id="svg"></svg></div></div>
+<div class="panel" id="panel"></div>
+
+<script>
+const PER = {
+  vel:{n:'Velocidad',dolor:'Contratar en volumen sin perder candidatos',combo:'IA Plus + Consulta masiva asíncrona',pub:'Tu reto es contratar a muchas personas sin perder candidatos por la espera. Te proponemos un informe con resultado en segundos y evaluación masiva de cientos de personas a la vez.'},
+  ord:{n:'Orden',dolor:'Ordenar y justificar su gestión',combo:'IA Plus + Centro de costos',pub:'Tu reto es llevar el control de tus procesos por área o sede. Te proponemos informes organizados por centros de costo para que reportes tu gestión con claridad.'},
+  per:{n:'Pérdidas',dolor:'Pérdidas en puestos que manejan caja o mercadería',combo:'IA Plus + Estabilidad financiera',pub:'Tu reto es reducir las pérdidas en los puestos que manejan dinero o mercadería. Te proponemos un informe de riesgo con una matriz de estabilidad financiera para esos puestos.'},
+  act:{n:'Personal actual',dolor:'Revisar al personal que ya trabaja',combo:'IA Plus + Re-evaluación + Black list',pub:'Tu reto es tener tranquilidad sobre el equipo que ya trabaja contigo. Te proponemos evaluaciones periódicas y una lista de control para no repetir contrataciones que ya te afectaron.'},
+  con:{n:'Confianza',dolor:'Elegir bien los cargos de confianza',combo:'Premium IA + Validación de confiabilidad',pub:'Tu reto es elegir bien a las personas que ocupan cargos clave. Te proponemos un informe de máxima profundidad con validación de confiabilidad para esos puestos.'},
+  cum:{n:'Cumplimiento',dolor:'Evaluar sin contingencias legales',combo:'Premium IA + SPLAFT',pub:'Tu reto es evaluar a tu personal cumpliendo la Ley de Protección de Datos Personales. Te proponemos un informe de máxima profundidad con consentimiento digital y el respaldo de iPartner.'},
+  cam:{n:'Cambio de proveedor',dolor:'Cambiar a un proveedor más rápido y claro',combo:'IA Plus + valor agregado según puestos',pub:'Tu reto es tener resultados rápidos, claros y con respaldo legal. Te proponemos un informe procesado con semáforo de riesgo, en segundos y cumpliendo la ley.'},
+};
+const VOL = ['Menos de 50','Entre 50 y 300','Más de 300'];
+const FIN = {puestos:['Operativos en volumen','Manejan caja o mercadería','Jefaturas o confianza','Vigilancia o seguridad'], rol:['Yo decido','Recomiendo','Estoy averiguando']};
+const P1 = ['Necesito contratar a muchas personas rápido','Tuvimos pérdidas, mermas o faltantes','Tenemos una auditoría o revisión','Mi proveedor actual no me convence'];
+// Filas: cada camino con sus pantallas y a qué resultados puede llegar
+const ROWS = [
+  {k:'A', n:'Contratar rápido', total:5, screens:[
+    {id:'A1',t:'¿A cuántas personas evalúan al mes?',h:'Un aproximado está bien.',ops:VOL},
+    {id:'A2',t:'¿Qué es lo que más te frena hoy?',h:'Elige la principal.',ops:['Los candidatos se van mientras espero','Revisar uno por uno me quita tiempo','Me cuesta ordenar por áreas o sedes'],to:[null,null,'ord']}],
+   res:['vel','ord','con'], rule:{vel:'Si no eligió "ordenar" ni "jefaturas"', ord:'Si eligió "Me cuesta ordenar"', con:'Si en puestos eligió "Jefaturas o confianza"'}},
+  {k:'B', n:'Pérdidas', total:6, screens:[
+    {id:'B1',t:'¿Dónde se notaron más las pérdidas?',h:'',ops:['En caja o en tiendas','En almacén o con mercadería','En la operación o en campo','En administración o finanzas']},
+    {id:'B2',t:'¿Qué personal te preocupa más?',h:'',ops:['El que voy a contratar','El que ya trabaja conmigo','Ambos'],to:[null,'act',null]},
+    {id:'B3',t:'¿A cuántas personas evalúan al mes?',h:'Un aproximado está bien.',ops:VOL}],
+   res:['per','act','con'], rule:{per:'Si no eligió "ya trabaja" ni "jefaturas"', act:'Si eligió "El que ya trabaja conmigo"', con:'Si en puestos eligió "Jefaturas o confianza"'}},
+  {k:'C', n:'Auditoría', total:6, screens:[
+    {id:'C1',t:'¿Qué tipo de revisión tienes por delante?',h:'',ops:['Protección de datos personales','Una exigencia de mi cliente o licitación','Prevención de lavado de activos']},
+    {id:'C2',t:'¿A quiénes necesitas evaluar?',h:'',ops:['A mi equipo','A contratistas o terceros','A ambos']},
+    {id:'C3',t:'¿A cuántas personas evalúan al mes?',h:'Un aproximado está bien.',ops:VOL}],
+   res:['cum'], rule:{cum:'Siempre en este camino'}},
+  {k:'D', n:'Proveedor', total:5, screens:[
+    {id:'D1',t:'¿Qué no te convence de tu proveedor actual?',h:'Elige la principal.',ops:['Demora en darme resultados','La información no es clara','No sé si cumple la ley de datos','El precio'],to:['vel',null,'cum',null]},
+    {id:'D2',t:'¿A cuántas personas evalúan al mes?',h:'Un aproximado está bien.',ops:VOL}],
+   res:['vel','cum','con','cam'], rule:{vel:'Si eligió "Demora"', cum:'Si eligió "No sé si cumple la ley"', con:'Si eligió "información no clara" o "precio" y puestos "Jefaturas"', cam:'Si eligió "información no clara" o "precio"'}},
+];
+
+/* ---------- layout ---------- */
+const PW=220, GX=70, GY=50, X0=60, Y0=40;
+const board=document.getElementById('board'), svg=document.getElementById('svg');
+const nodes={}; const wires=[];
+function bar(step,total){return `<div class="bar">${Array.from({length:total},(_,i)=>`<i class="${i<step?'on':''}"></i>`).join('')}</div>`}
+function phone(id,x,y,html,cls=''){const d=document.createElement('div');d.className='phone '+cls;d.dataset.id=id;d.style.left=x+'px';d.style.top=y+'px';d.innerHTML=html;board.appendChild(d);nodes[id]=d;return d}
+function topbar(step,total){return `<div class="top"><span class="logo"><i>i</i>partner</span><span class="step">Paso ${step} de ${total}</span></div>${bar(step,total)}`}
+function ops(list,id,g2){return `<div class="ops ${g2?'g2':''}">${list.map((o,i)=>`<div class="op" data-s="${id}" data-i="${i}">${o}<span class="dot"></span></div>`).join('')}</div>`}
+
+// Medidas de fila: altura según pantalla más alta
+const rowH = 470;
+const colX = i => X0 + 30 + i*(PW+GX);
+// Columna 0: contacto, columna 1: P1 (centrados en vertical)
+const totalH = Y0 + ROWS.length*rowH;
+const midY = Y0 + totalH/2 - 260;
+phone('C0', colX(0), midY, `${topbar(1,5)}<h3>Cotiza el servicio para tu empresa</h3><p class="help">Un asesor te llamará con una propuesta a tu medida.</p>
+  <div class="fl">Nombre y apellido</div><div class="field">Ana Torres</div><div class="fl">Celular</div><div class="field">+51 | 987 654 321</div><div class="fl">RUC de la empresa</div><div class="field">20XXXXXXXXX</div>
+  <div class="btn">Continuar ›</div><div class="legal">Al continuar, aceptas la Política de Privacidad…</div>`);
+phone('P1', colX(1), midY, `${topbar(2,5)}<h3>Ana, ¿qué te llevó a buscarnos hoy?</h3><p class="help">Elige la que más se parezca a tu situación.</p>${ops(P1,'P1')}`);
+wires.push({a:'C0',b:'P1'});
+
+let maxCol=0;
+ROWS.forEach((r,ri)=>{
+  const y = Y0 + ri*rowH + 20;
+  const lbl=document.createElement('div');lbl.className='row-lbl';lbl.style.left=(colX(2)-40)+'px';lbl.style.top=(y+60)+'px';lbl.style.height='300px';lbl.textContent=`Camino ${r.k} · ${r.n}`;board.appendChild(lbl);
+  let prev='P1', prevOpt=ri;
+  r.screens.forEach((s,si)=>{
+    const c=2+si; phone(s.id, colX(c), y, `${topbar(3+si,r.total)}<h3>${s.t}</h3>${s.h?`<p class="help">${s.h}</p>`:''}${ops(s.ops,s.id)}`);
+    wires.push({a:prev,b:s.id,opt:prevOpt}); prev=s.id; prevOpt=null; maxCol=Math.max(maxCol,c);
+  });
+  const cf=2+r.screens.length;
+  phone(r.k+'F', colX(cf), y, `${topbar(r.total,r.total)}<h3>Último paso</h3><p class="help">Así preparamos mejor la llamada.</p>
+    <div class="glab">¿Para qué puestos contratas?</div>${ops(FIN.puestos,r.k+'F',true)}<div class="glab">¿Cuál es tu rol en esta decisión?</div>${ops(FIN.rol,r.k+'F')}<div class="btn">Enviar ›</div>`);
+  wires.push({a:prev,b:r.k+'F'});
+  r.fcol=cf; maxCol=Math.max(maxCol,cf);
+});
+// Resultados: una columna por fila con las posibles pantallas finales apiladas
+const resCol = maxCol+1;
+ROWS.forEach((r,ri)=>{
+  // mover pantalla "Último paso" a la misma columna para todos
+  nodes[r.k+'F'].style.left = colX(maxCol)+'px';
+  const y0 = Y0 + ri*rowH + 20;
+  r.res.forEach((pk,j)=>{
+    const P=PER[pk], id=r.k+'R'+pk;
+    const x = colX(resCol) + j*(PW+24);
+    phone(id, x, y0, `<div class="cond">${r.rule[pk]}</div><div class="orb"></div><span class="badge">✓ Tu primer diagnóstico está listo</span><h3>Ana, esto es lo que vemos</h3><p>${P.pub}</p><div class="combo">Perfil ${P.n} · ${P.combo}</div>`, 'res');
+    wires.push({a:r.k+'F',b:id});
+  });
+});
+const colsTitles=['Paso 1 · Contacto','Paso 2 · Motivo','Pregunta de su camino','Pregunta de su camino','Pregunta de su camino'];
+const W = colX(resCol) + 4*(PW+24) + 40, H = Y0 + ROWS.length*rowH + 40;
+board.style.width=W+'px'; board.style.height=H+'px'; svg.setAttribute('width',W); svg.setAttribute('height',H);
+for (let c=0;c<=maxCol;c++){const l=document.createElement('div');l.className='col-lbl';l.style.left=colX(c)+'px';l.style.width=PW+'px';l.textContent=c===maxCol?'Último paso':(colsTitles[c]||'');board.appendChild(l);}
+const rl=document.createElement('div');rl.className='col-lbl';rl.style.left=colX(resCol)+'px';rl.style.width=(PW*2)+'px';rl.style.textAlign='left';rl.textContent='Resultado que ve la persona';board.appendChild(rl);
+
+function pt(el,side){const r={x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};return side==='r'?{x:r.x+r.w,y:r.y+r.h/2}:{x:r.x,y:r.y+r.h/2}}
+function draw(){
+  svg.innerHTML='<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9B86D9"/></marker></defs>'+wires.map((w,i)=>{
+    let a=pt(nodes[w.a],'r'); const b=pt(nodes[w.b],'l');
+    if (w.opt!=null){const o=nodes[w.a].querySelectorAll('.op')[w.opt]; a={x:nodes[w.a].offsetLeft+nodes[w.a].offsetWidth, y:nodes[w.a].offsetTop+o.offsetTop+o.offsetHeight/2};}
+    const mx=(a.x+b.x)/2;
+    return `<path class="w" data-i="${i}" d="M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x-4},${b.y}" fill="none" stroke="#9B86D9" stroke-width="1.8" marker-end="url(#ar)"/>`;
+  }).join('');
+}
+draw();
+
+/* ---------- interacción ---------- */
+const panel=document.getElementById('panel');
+function light(ids){
+  board.classList.add('dim');
+  document.querySelectorAll('.phone').forEach(p=>p.classList.toggle('lit',ids.includes(p.dataset.id)));
+  document.querySelectorAll('path.w').forEach(p=>{const w=wires[p.dataset.i];p.classList.toggle('lit',ids.includes(w.a)&&ids.includes(w.b));});
+}
+function limpiar(){board.classList.remove('dim');document.querySelectorAll('.lit,.op.sel').forEach(e=>e.classList.remove('lit','sel'));panel.classList.remove('on');}
+board.addEventListener('click',e=>{
+  const o=e.target.closest('.op'); if(!o) return;
+  const s=o.dataset.s, i=+o.dataset.i;
+  o.parentElement.querySelectorAll('.op').forEach(x=>x.classList.toggle('sel',x===o));
+  let ids=[], txt='';
+  if (s==='P1'){ const r=ROWS[i]; ids=['C0','P1',...r.screens.map(x=>x.id),r.k+'F',...r.res.map(p=>r.k+'R'+p)];
+    txt=`<b class="t">Camino ${r.k} · ${r.n}</b>Le salen ${r.total} pantallas en total. Puede terminar en: ${r.res.map(p=>'<b>'+PER[p].n+'</b>').join(', ')}.`; }
+  else {
+    const r=ROWS.find(r=>s.startsWith(r.k)); const sc=r.screens.find(x=>x.id===s);
+    let res=r.res;
+    if (sc && sc.to){ const t=sc.to[i]; res = t ? [t] : r.res.filter(p=>!sc.to.includes(p)||p==='con'); }
+    if (s.endsWith('F')){ const group=o.closest('.ops'); const isPuestos=[...group.parentElement.querySelectorAll('.ops')][0]===group;
+      if (isPuestos) res = i===2 && r.res.includes('con') ? ['con'] : r.res.filter(p=>p!=='con'); }
+    ids=['C0','P1',...r.screens.map(x=>x.id),r.k+'F',...res.map(p=>r.k+'R'+p)];
+    txt=`<b class="t">${o.textContent}</b>Con esta respuesta puede terminar en: ${res.map(p=>'<b>'+PER[p].n+'</b>').join(', ')}.${res.length===1?`<div class="k">Lo que recibe la vendedora</div>Dolor: ${PER[res[0]].dolor}<br>Proponer: ${PER[res[0]].combo}`:''}`;
+  }
+  light(ids); panel.innerHTML=txt+'<br><button onclick="limpiar()">Limpiar</button>'; panel.classList.add('on');
+});
+document.getElementById('reset').onclick=limpiar;
+document.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-z]').forEach(x=>x.classList.toggle('on',x===b));const z=+b.dataset.z;board.style.transform=`scale(${z})`;board.parentElement.style.height='auto';board.style.marginBottom=(board.offsetHeight*(z-1))+'px';board.style.marginRight=(board.offsetWidth*(z-1))+'px';});
+document.querySelector('[data-z=".8"]').click();
+</script>
+</body>
+</html>
