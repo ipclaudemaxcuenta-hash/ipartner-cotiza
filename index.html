@@ -546,11 +546,28 @@ function confeti(){
   document.body.appendChild(c); setTimeout(()=>c.remove(), 4500);
 }
 
-// Pendiente: conectar a Supabase. Por ahora solo muestra la respuesta en la consola.
-// Se guarda apenas termina la pantalla 1 (lead parcial) y se actualiza al final con el mismo id.
-const LEAD_ID = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
-function guardarParcial(){ delete data._correoOk; enviar({...data, completo:false, estado:'parcial', creado:new Date().toISOString()}); }
-async function enviar(d){ console.log('Respuesta del formulario:', JSON.stringify({id:LEAD_ID, origen:'linkedin', ...d})); }
+// Guarda en Supabase: apenas termina la pantalla 1 (lead parcial) y al final con el mismo id.
+// La clave publicable solo permite llamar a guardar_lead(); la tabla no se puede leer desde la web.
+const SUPABASE_URL = 'https://bfzvhcmcmliiyyvpbbno.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_mkwSxWsqar7jN_yZPgKg0A_e4aHavKL';
+const LEAD_ID = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g,()=>(Math.random()*16|0).toString(16)));
+function guardarParcial(){ delete data._correoOk; enviar({...data, completo:false, estado:'parcial'}); }
+async function enviar(d){
+  const orden = ['p1','a1','a2','b1','b2','c1','c2','d1','d2','vol','puestos','rol'];
+  const payload = {id:LEAD_ID, origen:SIM ? 'prueba' : 'linkedin', ...d,
+    respuestas: orden.filter(x=>d[x]).map(x=>({pregunta:x, respuesta:d[x]}))};
+  console.log('Respuesta del formulario:', JSON.stringify(payload));
+  for (let i=0;i<3;i++){
+    try {
+      const r = await fetch(SUPABASE_URL+'/rest/v1/rpc/guardar_lead', {method:'POST', keepalive:true,
+        headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'}, body:JSON.stringify({d:payload})});
+      if (r.ok) return true;
+      console.warn('Supabase respondió', r.status, await r.text());
+    } catch(e){ console.warn('No se pudo guardar, reintentando', e); }
+    await new Promise(res=>setTimeout(res, 800*(i+1)));
+  }
+  return false;
+}
 
 if (MODO_PRUEBA){
   const b = document.createElement('button');
