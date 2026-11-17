@@ -188,6 +188,8 @@ textarea.inp{min-height:150px;resize:vertical;line-height:1.5}
   .opts.pairs .opt .tx b{font-size:14px;line-height:1.25}
   .opts.pairs.n3 .opt{min-height:76px}
   .glab{font-size:14px;margin:16px 0 8px}
+  .glab:first-child{margin-top:0}
+  .opts.pairs .opt{min-height:76px}
 }
 
 .badge{display:inline-flex;gap:6px;align-items:center;font:600 13px Inter;color:#0F7B4B;background:#E7F8EF;border:1px solid #BFEBD3;padding:6px 12px;border-radius:999px}
@@ -312,6 +314,8 @@ const N = {
     ['Demora en darme resultados','',ic.clock],['La información no es clara','',ic.doc],['No sé si cumple la ley de datos','',ic.lock],['El precio','',ic.cart]]},
   d2:{id:'d2', title:'¿A cuántas personas evalúan al mes?', help:'Un aproximado está bien.', type:'one', opts:[
     ['Menos de 50','',ic.user],['Entre 50 y 300','',ic.team],['Más de 300','',ic.building]]},
+  vol:{id:'vol', title:'¿A cuántas personas evalúan al mes?', help:'Un aproximado está bien.', type:'one', opts:[
+    ['Menos de 50','',ic.user],['Entre 50 y 300','',ic.team],['Más de 300','',ic.building]]},
   fin:{id:'fin', title:'Último paso', help:'Así preparamos mejor la llamada.', type:'two', groups:[
     {id:'puestos', l:'¿Para qué puestos contratas principalmente?', opts:[
       ['Operativos en volumen','',ic.team],['Manejan caja o mercadería','',ic.cart],['Jefaturas o confianza','',ic.user],['Vigilancia o seguridad','',ic.shield]]},
@@ -319,9 +323,11 @@ const N = {
       ['Yo decido','',ic.bolt],['Recomiendo','',ic.team],['Estoy averiguando','',ic.search]]}]},
 };
 const RAMA = ['a','b','c','d'];
-const TOTAL = 5;
+const TOTAL_BASE = 5;
 const idx = (id, v) => (N[id].opts||[]).findIndex(o=>o[0]===v);
-function camino(){ const b = RAMA[idx('p1', data.p1)]; return ['contacto','p1', b?b+'1':'a1', b?b+'2':'a2', 'fin']; }
+// Las ramas B (pérdidas) y C (auditoría) no preguntan el volumen: se agrega 'vol' antes del último paso.
+function camino(){ const b = RAMA[idx('p1', data.p1)]; const c = ['contacto','p1', b?b+'1':'a1', b?b+'2':'a2']; if (b==='b'||b==='c') c.push('vol'); c.push('fin'); return c; }
+const TT = () => camino().length;
 const Qk = () => N[camino()[k]];
 
 /* ===== Diagnóstico final (lo ve la persona) y resumen (para la vendedora) ===== */
@@ -356,14 +362,14 @@ function render(dir='in'){
   const q = Qk(), box = $('q');
   $('err').textContent = '';
   document.querySelector('.card').classList.toggle('wide', !!q.wide);
-  $('bar').style.width = (MOBIL.matches ? (k+1)/TOTAL : (k+1)/(TOTAL+1))*100+'%';
+  $('bar').style.width = (MOBIL.matches ? (k+1)/TT() : (k+1)/(TT()+1))*100+'%';
   $('hback').style.display = k===0 ? 'none' : '';
-  $('count').innerHTML = `Paso <b>${k+1}</b> de ${TOTAL}`;
+  $('count').innerHTML = `Paso <b>${k+1}</b> de ${TT()}`;
   $('prev').classList.toggle('hide', k===0);
   $('legal').classList.toggle('off', !q.consent);
-  $('next').firstChild.textContent = k===TOTAL-1 ? 'Enviar' : 'Continuar';
+  $('next').firstChild.textContent = k===TT()-1 ? 'Enviar' : 'Continuar';
   const title = typeof q.title==='function' ? q.title(data) : q.title;
-  let h = `<div class="qhead"><h1>${title}</h1>${q.help?`<p class="help${k===0?' one':''}">${q.help}</p>`:''}<p class="mstep">Paso ${k+1} de ${TOTAL}</p></div><div class="qbody">`;
+  let h = `<div class="qhead"><h1>${title}</h1>${q.help?`<p class="help${k===0?' one':''}">${q.help}</p>`:''}<p class="mstep">Paso ${k+1} de ${TT()}</p></div><div class="qbody">`;
 
   if (q.type==='one' || q.type==='many'){
     const cur = data[q.id];
@@ -495,7 +501,7 @@ $('q').addEventListener('input', e=>{ $('err').textContent=''; if (e.target.clas
 function go(){
   collect(); if (!validate()) return;
   if (k===0){ data.acepta = true; data.consentimiento = {texto: $('legal').textContent.trim(), fecha: new Date().toISOString()}; guardarParcial(); }
-  if (k < TOTAL-1){ k++; render('in'); } else finish();
+  if (k < TT()-1){ k++; render('in'); } else finish();
 }
 $('next').onclick = go;
 $('hback').onclick = ()=>$('prev').click();
@@ -505,7 +511,7 @@ document.addEventListener('keydown', e=>{
 });
 
 function estado(d){
-  const vol = d.a1 || d.d2;
+  const vol = d.a1 || d.d2 || d.vol;
   if (vol==='Menos de 50') return 'revisar (menos de 50 al mes)';
   return vol ? 'llamar' : 'llamar · confirmar volumen y trabajadores con el RUC';
 }
@@ -525,7 +531,7 @@ async function finish(){
   confeti();
   if (SIM) $('q').insertAdjacentHTML('beforeend', `<div class="simbox"><b>Simulador · lo que recibe la vendedora</b>
     <p><span>Contacto</span>${esc(data.nombre)} · +51 ${esc(data.celular)} · RUC ${esc(data.ruc)}</p>
-    <p><span>Respuestas</span>${['p1','a1','a2','b1','b2','c1','c2','d1','d2','puestos','rol'].filter(x=>data[x]).map(x=>esc(data[x])).join(' → ')}</p>
+    <p><span>Respuestas</span>${['p1','a1','a2','b1','b2','c1','c2','d1','d2','vol','puestos','rol'].filter(x=>data[x]).map(x=>esc(data[x])).join(' → ')}</p>
     <p><span>Dolor detectado</span>${P.dolor}</p><p><span>Proponer</span>${P.combo}</p>
     <p><span>Resaltar</span>${P.resaltar}</p><p><span>Objeción probable</span>${P.objecion}</p>
     <p><span>Estado</span>${data.estado}</p>
@@ -549,7 +555,7 @@ async function enviar(d){ console.log('Respuesta del formulario:', JSON.stringif
 if (MODO_PRUEBA){
   const b = document.createElement('button');
   b.type = 'button'; b.className = 'skip'; b.textContent = 'Modo prueba: saltar ›';
-  b.onclick = ()=>{ collect(); if (k < TOTAL-1){ k++; render('in'); } else finish(); };
+  b.onclick = ()=>{ collect(); if (k < TT()-1){ k++; render('in'); } else finish(); };
   document.body.appendChild(b);
 }
 render();
