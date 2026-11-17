@@ -1,9 +1,9 @@
 // Envía a las vendedoras un correo con cada respuesta del formulario.
+// El correo lo envía un Google Apps Script publicado en el Gmail del proyecto (igual que en Rabbit).
 // Variables en Vercel (Settings → Environment Variables):
-//   GMAIL_USER          correo de Gmail que envía los avisos
-//   GMAIL_APP_PASSWORD  contraseña de aplicación de ese Gmail (16 letras)
-//   AVISO_PARA          correos que reciben, separados por coma
-const nodemailer = require('nodemailer');
+//   CORREO_URL    dirección de la aplicación web de Apps Script
+//   CORREO_CLAVE  clave compartida (la misma que la constante CLAVE del script)
+//   AVISO_PARA    correos que reciben, separados por coma
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const PREG = {
@@ -19,8 +19,8 @@ module.exports = async (req, res) => {
   if (typeof d === 'string') { try { d = JSON.parse(d); } catch { return res.status(400).end(); } }
   if (!d || !/^9\d{8}$/.test(String(d.celular || '').replace(/\D/g, ''))) return res.status(400).end();
 
-  const { GMAIL_USER, GMAIL_APP_PASSWORD, AVISO_PARA } = process.env;
-  if (!GMAIL_USER || !GMAIL_APP_PASSWORD || !AVISO_PARA) return res.status(500).json({ error: 'Faltan variables de entorno' });
+  const { CORREO_URL, CORREO_CLAVE, AVISO_PARA } = process.env;
+  if (!CORREO_URL || !CORREO_CLAVE || !AVISO_PARA) return res.status(500).json({ error: 'Faltan variables de entorno' });
 
   const cel = String(d.celular).replace(/\D/g, '');
   const parcial = d.tipo === 'parcial';
@@ -49,8 +49,10 @@ module.exports = async (req, res) => {
   </div></div>`;
 
   try {
-    const t = nodemailer.createTransport({ service: 'gmail', auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD } });
-    await t.sendMail({ from: `Formulario iPartner <${GMAIL_USER}>`, to: AVISO_PARA, subject: asunto, html });
+    const r = await fetch(CORREO_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ clave: CORREO_CLAVE, para: AVISO_PARA, asunto, html }) });
+    const txt = await r.text();
+    if (!r.ok || /"ok"\s*:\s*false/.test(txt)) throw new Error('Apps Script: ' + r.status + ' ' + txt.slice(0, 200));
     return res.status(200).json({ ok: true });
   } catch (e) {
     console.error(e);
